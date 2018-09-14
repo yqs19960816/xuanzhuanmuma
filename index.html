@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        /*初始化  reset*/
+
+        blockquote,
+        body,
+        button,
+        dd,
+        dl,
+        dt,
+        fieldset,
+        form,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        hr,
+        input,
+        legend,
+        li,
+        ol,
+        p,
+        pre,
+        td,
+        textarea,
+        th,
+        ul {
+            margin: 0;
+            padding: 0
+        }
+
+        body,
+        button,
+        input,
+        select,
+        textarea {
+            font: 12px/1.5 "Microsoft YaHei", "微软雅黑", SimSun, "宋体", sans-serif;
+            color: #666;
+        }
+
+        ol,
+        ul {
+            list-style: none
+        }
+
+        a {
+            text-decoration: none
+        }
+
+        fieldset,
+        img {
+            border: 0;
+            vertical-align: top;
+        }
+
+        a,
+        input,
+        button,
+        select,
+        textarea {
+            outline: none;
+        }
+
+        a,
+        button {
+            cursor: pointer;
+        }
+
+        .wrap {
+            width: 1200px;
+            margin: 0 auto;
+        }
+
+        .slide {
+            height: 500px;
+            position: relative;
+        }
+
+        .slide li {
+            position: absolute;
+            left: 200px;
+            top: 0;
+        }
+
+        .slide li img {
+            width: 100%;
+        }
+
+        .arrow {
+            opacity: 0;
+        }
+
+        .prev,
+        .next {
+            width: 76px;
+            height: 112px;
+            position: absolute;
+            top: 50%;
+            margin-top: -56px;
+            background: url("images/prev.png") no-repeat;
+            z-index: 99;
+        }
+
+        .next {
+            right: 0;
+            background-image: url("images/next.png");
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap" id="wrap">
+        <div class="slide" id="slide">
+            <ul>
+                <!-- 五张图片 -->
+                <li>
+                    <a href="#">
+                        <img src="images/slidepic1.jpg" alt="">
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <img src="images/slidepic2.jpg" alt="">
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <img src="images/slidepic3.jpg" alt="">
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <img src="images/slidepic4.jpg" alt="">
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <img src="images/slidepic5.jpg" alt="">
+                    </a>
+                </li>
+            </ul>
+            <!-- 左右切换按钮 -->
+            <div class="arrow" id="arrow">
+                <a href="javascript:;" class="prev"></a>
+                <a href="javascript:;" class="next"></a>
+            </div>
+        </div>
+    </div>
+    <script>
+        window.onload = function () {
+            var slide = document.getElementById('slide');
+            var liArr = slide.getElementsByTagName('li');
+            var arrow = slide.children[1];
+            var button = arrow.children;
+            //函数节流,限制点击次数，防止产生过大的负载
+            //定义一个开闭原则
+            var flag = true;
+            var arr = [{ //  1
+                    width: 400,
+                    top: 70,
+                    left: 50,
+                    opacity: 20,
+                    zIndex: 2
+                },
+                { // 2
+                    width: 600,
+                    top: 120,
+                    left: 0,
+                    opacity: 80,
+                    zIndex: 3
+                },
+                { // 3
+                    width: 800,
+                    top: 100,
+                    left: 200,
+                    opacity: 100,
+                    zIndex: 4
+                },
+                { // 4
+                    width: 600,
+                    top: 120,
+                    left: 600,
+                    opacity: 80,
+                    zIndex: 3
+                },
+                { //5
+                    width: 400,
+                    top: 70,
+                    left: 750,
+                    opacity: 20,
+                    zIndex: 2
+                }
+            ];
+            //需求：点击左右按钮，实现旋转木马
+            //原理：点击右侧按钮，让3号盒子的样式赋值给2号盒子，然后2->1,1->5,5->4,4->3。
+            //左侧同理。。
+            //步骤：
+            //1.鼠标放到轮播图之上，让两侧的按钮显示（改变透明度），离开隐藏
+            slide.onmouseenter = function () {
+                animation(arrow, {
+                    "opacity": 100
+                });
+            }
+            slide.onmouseleave = function () {
+                animation(arrow, {
+                    "opacity": 0
+                });
+            }
+            //2.让页面加载出来所有盒子的样式
+            move(); //代码优化进入了move函数，不传入参数就会让页面加载所有的盒子的样式
+            //3.把两侧按钮绑定事件，（调用一个方法，只有一个参数。true为正向旋转,false为反向旋转）
+            //利用for in绑定事件,利用它的类名进行判断是前一个还是后一个按钮
+            for (var k in button) {
+                button[k].onclick = function (event) {
+                    if (event.target.className == "prev") {
+                        if (flag) {
+                            //每点击一次立即修改为false，这样别人就不能再点击（点击也不起作用了）
+                            flag = false;
+                            //定义一个move方法，通过传递的参数来进行向左移动还是向右移动
+                            move(true);
+
+                        }
+                    } else {
+                        if (flag) {
+                            flag = false;
+                            move(false);
+                        }
+                    }
+                }
+            }
+            //4.书写函数，（操作数组，正向旋转，删除数组中的第一项，添加到最后面，
+            //就能实现与元素样式的替换，反向旋转，同理。
+            function move(bool) {
+                //判断：如果等于undefined，那么就不执行这两个if语句
+                //if(bool==="true"||bool==="false"){
+                if (bool == true || bool == false) {
+                    if (bool) {
+                        //操作数组，正向旋转，删除数组的第一位，添加到最后一项
+                        arr.push(arr.shift());
+
+                    } else {
+                        //操作数组，反向旋转，删除数组的最后一位，添加到第一位
+                        arr.unshift(arr.pop());
+                    }
+                }
+                //再次为页面的所有li进行赋值
+                for (var i = 0; i < liArr.length; i++) {
+                    //利用animation()框架让指定的属性，缓慢运动到指定位置,第二个参数也可以为arr[i](不推荐)
+                    animation(liArr[i], {
+                        "width": arr[i].width, //第一个li，必须对应数组中的第一个元素指定的属性
+                        "top": arr[i].top,
+                        "left": arr[i].left,
+                        "opacity": arr[i].opacity,
+                        "zIndex": arr[i].zIndex
+                    }, function () {
+                        //回调函数、所有程序完毕，初始化flag的值
+                        flag = true;
+                    });
+                }
+            }
+            //缓动框架的封装
+            //解决了以下几个问题：1.只能获取行内式，不能获取内嵌和外链样式，导致我们获取left值的时候使用的是offserLeft
+            //2.只能操作一个属性（一个动画函数只能操作一个属性）
+            //3.可以传入多个属性，进行操作
+            //4.解决了透明度属性的封装
+            function animation(elem, json, fn) {
+                //先清除定时器
+                clearInterval(elem.timer);
+                //设置定时器
+                elem.timer = setInterval(function () {
+                    //开闭原则（更小范围的计数器）
+                    var bool = true;
+                    //遍历属性和值，分贝单独处理json
+                    for (var k in json) {
+                        //1.获取当前属性
+                        //原来的attr等于现在的k，原来的target = json[k]
+                        var leader;
+                        //判断属性是否是透明属性
+                        if (k === "opacity") {
+                            //将值变成百分位,易于运算，不容易发生精度丢失，默认值是1
+                            leader = getStyle(elem, k) * 100 || 1;
+                        } else if (k == "z-index") {
+                            leader = getStyle(elem, k) || 1;
+                        } else {
+                            leader = parseInt(getStyle(elem, k)) || 0;
+                        }
+                        //2.获取步长，如果是opaticy属性，我们在写入值的时候写入的是百分位的数
+                        //而且获取的属性值也被化成了百分位，所以下面的json[k]不用再进行处理了
+                        var step = (json[k] - leader) / 10;
+                        //3.对步长进行二次加工
+                        step = step > 0 ? Math.ceil(step) : Math.floor(step);
+                        leader = leader + step;
+                        //4.对元素进行赋值,特殊元素特殊处理
+                        if (k === "opacity") {
+                            //将属性值转化为小数位,赋值
+                            elem.style[k] = leader / 100;
+                            //以上赋值方法，IE678不支持，需要进行兼容写法
+                            elem.style.filter = "alpha(opacity=" + leader + ")";
+                        }
+                        //如果是层级属性，一次赋值成功，不需要缓动赋值
+                        //需求决定，用elem.style.zIndex和elem.style[k]两种赋值方法都行
+                        else if (k == "zIndex") {
+                            // elem.style.zIndex = json[k];
+                            elem.style.zIndex = json[k];
+                        } else {
+                            elem.style[k] = leader + "px";
+                        }
+
+                        //对每一个元素进行判断是否达到目标值，只要有一个没有达到，就不能清除定时器
+                        //目标值和当前值的差大于步长bool为false，不能跳出循环
+                        // if(Math.abs(json[k]-leader)>Math.abs(step)){
+                        //不考虑小数的情况下，目标位置和当前位置不相等就不能清除定时器
+                        if (json[k] !== leader) {
+                            bool = false;
+                        }
+                    }
+                    console.log(bool);
+                    //只有所有的属性都达到了指定位置，bool才不会变成false
+                    if (bool) {
+                        clearInterval(elem.timer);
+                        //所有程序执行完毕，现在执行回调函数
+                        //只有传递了回调函数，才能执行
+                        if (fn) {
+                            fn();
+                        }
+                    }
+                }, 10);
+            }
+
+
+            //兼容方法获取元素计算的样式（只读）
+            //getComputedStyle方法返回值是一个对象，也包含默认的样式
+            function getStyle(ele, attr) {
+                if (window.getComputedStyle) {
+                    return window.getComputedStyle(ele, null)[attr];
+                }
+                //兼容IE
+                return ele.currentStyle[attr];
+            }
+        }
+    </script>
+</body>
+
+</html>
